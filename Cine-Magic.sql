@@ -9,7 +9,7 @@ DROP TABLE movies;
 CREATE TABLE movies (
 	id INT PRIMARY KEY AUTO_INCREMENT,
     title VARCHAR(50) NOT NULL,
-     duration_minutes VARCHAR(50),
+     duration_minutes INT,
      ge_restriction INT CHECK (ge_restriction IN (0, 13, 16, 18)) DEFAULT 0
 );
 
@@ -24,7 +24,7 @@ CREATE TABLE showtimes (
 	id INT PRIMARY KEY AUTO_INCREMENT,
     movie_id INT NOT NULL,
     room_id INT ,
-    show_time VARCHAR(50),
+    show_time DATETIME,
     ticket_price INT CHECK (ticket_price > 0),
      FOREIGN KEY (movie_id) REFERENCES movies(id),
      FOREIGN KEY (room_id) REFERENCES rooms(id)
@@ -40,10 +40,10 @@ CREATE TABLE bookings (
 ); 
 
 INSERT INTO movies (title, duration_minutes, ge_restriction) VALUES
-('Mai', '130', 16),
-('Đào, Phở và Piano', '100', 13),
-('Lật Mặt 7: Một Điều Ước', '140', 13),
-('Quỷ Cẩu', '110', 18);
+('Mai', 160, 16),
+('Đào, Phở và Piano', 100, 13),
+('Lật Mặt 7: Một Điều Ước', 140, 13),
+('Quỷ Cẩu', 110, 18);
 
 INSERT INTO rooms (name, max_seats, status) VALUES
 ('Phòng 1', 100, 'active'),
@@ -51,7 +51,7 @@ INSERT INTO rooms (name, max_seats, status) VALUES
 ('Phòng 3', 60, 'maintenance');
 
 INSERT INTO showtimes (movie_id, room_id, show_time, ticket_price) VALUES
-(1, 1, '2026-05-03 18:00', 90000),
+(1, 1, '2026-05-03 18:00', 120000),
 (2, 1, '2026-05-03 20:30', 85000),
 (3, 2, '2026-05-04 17:00', 95000),
 (4, 2, '2026-05-04 21:00', 100000),
@@ -82,9 +82,24 @@ WHERE  room_id = 1;
 DELETE FROM bookings
 WHERE phone = '0987654321';
 
-DELETE FROM showtimes
-WHERE movie_id = 3;
-DELETE FROM movies
-WHERE id = 3;
+DELETE FROM bookings WHERE showtime_id IN (
+    SELECT id FROM showtimes WHERE movie_id = 3
+);
 
 SET SQL_SAFE_UPDATES = 1;
+
+SELECT title FROM movies
+WHERE duration_minutes BETWEEN 90 AND 120;
+
+SELECT * FROM bookings b
+INNER JOIN showtimes st ON b.showtime_id = st.id
+WHERE st.id = 2
+ORDER BY b.booking_date DESC;
+
+SELECT * FROM movies
+WHERE ge_restriction >= 18 OR duration_minutes > 150;
+SELECT *
+FROM showtimes
+WHERE ticket_price > 100000
+  AND MONTH(show_time) = MONTH(CURRENT_DATE())
+  AND YEAR(show_time) = YEAR(CURRENT_DATE());
